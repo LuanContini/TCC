@@ -1,5 +1,6 @@
 from flask import Blueprint
 
+
 atendimentos_bp = Blueprint('atendimentos', __name__, url_prefix='/atendimentos')
 
 @atendimentos_bp.route('/', methods=['GET'])
