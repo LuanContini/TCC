@@ -1,0 +1,23 @@
+# --- Framework principal ---
+Flask==3.0.3               # Framework web
+Flask-Login==0.6.3         # Autenticação e controle de sessão
+Flask-Cors==4.0.1          # Habilitar CORS
+
+# --- Banco de Dados ---
+flask_sqlalchemy==3.0.3
+SQLAlchemy==2.0.31         # ORM para banco de dados relacional
+mysqlclient==2.2.4         # Driver MySQL
+
+# --- Arquivos de Configuração ---
+python-dotenv==1.0.1       # Ler variáveis de ambiente do .env
+
+# --- Reconhecimento Facial ---
+insightface==0.7.3         # Biblioteca ArcFace para embeddings
+onnxruntime==1.17.3        # Execução de modelos ONNX
+opencv-python==4.10.0.84   # Processamento de imagem e captura de vídeo
+numpy==1.26.4              # Operações numéricas
+faiss-cpu==1.8.0           # Busca e comparação de embeddings
+
+# --- Utilitários ---
+requests==2.32.3           # Requisições HTTP
+Pillow==10.3.0             # Manipulação de imagens
