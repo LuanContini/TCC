@@ -1,16 +1,23 @@
 from flask import Flask, request, jsonify
-from flask_jwt_extended import JWTManager, verify_jwt_in_request, exceptions as jwt_exceptions
+from flask_jwt_extended import (
+    JWTManager,
+    verify_jwt_in_request,
+    exceptions as jwt_exceptions,
+)
 from .database import db, init_db
 from .routes import register_routes
+from app.utils.error_handler import register_error_handlers
+
 
 def create_app():
     app = Flask(__name__)
-    #init_db(app)
+    # init_db(app)
     register_routes(app)
+    register_error_handlers(app)
 
-    excluded_routes = ['/auth/login', '/auth/register']
+    excluded_routes = ["/auth/login", "/auth/register"]
 
-    '''
+    """
     @app.before_request
     def check_jwt():
         path = request.path
@@ -27,6 +34,6 @@ def create_app():
             return jsonify({"msg": "Token expirado"}), 401
         except Exception:
             return jsonify({"msg": "Token inválido"}), 401
-    '''
-    
+    """
+
     return app
