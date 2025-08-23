@@ -1,60 +1,89 @@
-import React, { useRef, useState } from 'react'
+import React, { useRef } from 'react'
+import { useForm, Controller } from 'react-hook-form'
+import { yupResolver } from '@hookform/resolvers/yup'
 import FormField from '../../components/FormField'
 import { saveEncounter, savePrescription, uploadExam } from '../../services/clinical'
+import { atendimentoSchema } from '../../validations/atendimentoSchema'
 
 export default function Atendimento(){
-  const [data, setData] = useState({
-    patientId:'', symptoms:'', diagnosis:'', notes:'',
-    alerts:'', // exibir alertas (ex.: alergia grave) quando vindo do backend
-    prescriptionText:''
-  })
-  const [files, setFiles] = useState([])
-  const onChange = (k,v)=> setData(d=>({ ...d, [k]: v }))
   const inputRef = useRef()
+  const { register, handleSubmit, control, formState: { errors }, watch } = useForm({
+    resolver: yupResolver(atendimentoSchema),
+    defaultValues: {
+      patientId:'', symptoms:'', diagnosis:'', notes:'',
+      alerts:'', prescriptionText:''
+    }
+  })
 
-  async function onSaveEncounter(e){
-    e.preventDefault()
-    await saveEncounter(data) // {patientId, symptoms, diagnosis, notes}
+  const files = watch('files') || []
+
+  const onSaveEncounter = async (data) => {
+    await saveEncounter(data)
     alert('Atendimento salvo.')
   }
 
-  async function onSavePrescription(){
-    // Opcional: usar jsPDF para gerar PDF localmente e enviar
+  const onSavePrescription = async (data) => {
     await savePrescription({ patientId: data.patientId, text: data.prescriptionText })
     alert('Prescrição salva.')
   }
 
-  async function onUploadFiles(){
-    if(!files.length || !data.patientId) return
-    for(const f of files) await uploadExam(data.patientId, f)
-    alert('Arquivos enviados.')
-  }
+  const onUploadFiles = async (patientId, files2) => {
+  const fileList = files2 || []  // garante array mesmo se undefined
+  if (!fileList.length || !patientId) return
+  for (const f of fileList) await uploadExam(patientId, f)
+  alert('Arquivos enviados.')
+}
+
 
   return (
-    <form className="card" onSubmit={onSaveEncounter}>
+    <form className="card" onSubmit={handleSubmit(onSaveEncounter)}>
       <h2>Atendimento Clínico</h2>
       <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:12}}>
-        <FormField label="Paciente (ID)"><input className="input" value={data.patientId} onChange={e=>onChange('patientId', e.target.value)} /></FormField>
-        <FormField label="Alertas (somente leitura)">
-          <input className="input" value={data.alerts} readOnly placeholder="Ex.: Alergia grave a penicilina" />
+
+        <FormField label="Paciente (ID)">
+          <input className="input" {...register("patientId")} />
+          {errors.patientId && <p>{errors.patientId.message}</p>}
         </FormField>
 
-        <FormField label="Sintomas"><textarea className="input" rows={3} value={data.symptoms} onChange={e=>onChange('symptoms', e.target.value)} /></FormField>
-        <FormField label="Diagnóstico"><textarea className="input" rows={3} value={data.diagnosis} onChange={e=>onChange('diagnosis', e.target.value)} /></FormField>
+        <FormField label="Alertas (somente leitura)">
+          <input className="input" {...register("alerts")} readOnly placeholder="Ex.: Alergia grave a penicilina" />
+        </FormField>
 
-        <FormField label="Anotações (evolução)"><textarea className="input" rows={4} value={data.notes} onChange={e=>onChange('notes', e.target.value)} /></FormField>
+        <FormField label="Sintomas">
+          <textarea className="input" rows={3} {...register("symptoms")} />
+          {errors.symptoms && <p>{errors.symptoms.message}</p>}
+        </FormField>
+
+        <FormField label="Diagnóstico">
+          <textarea className="input" rows={3} {...register("diagnosis")} />
+          {errors.diagnosis && <p>{errors.diagnosis.message}</p>}
+        </FormField>
+
+        <FormField label="Anotações (evolução)">
+          <textarea className="input" rows={4} {...register("notes")} />
+          {errors.notes && <p>{errors.notes.message}</p>}
+        </FormField>
+
         <FormField label="Prescrição (texto)">
-          <textarea className="input" rows={4} value={data.prescriptionText} onChange={e=>onChange('prescriptionText', e.target.value)} />
+          <textarea className="input" rows={4} {...register("prescriptionText")} />
+          {errors.prescriptionText && <p>{errors.prescriptionText.message}</p>}
           <div style={{marginTop:8, display:'flex', gap:8}}>
-            <button className="button" type="button" onClick={onSavePrescription}>Salvar Prescrição</button>
-            {/* Dica: adicionar botão "Exportar PDF" com jsPDF quando quiser */}
+            <button type="button" className="button" onClick={() => onSavePrescription(watch())}>Salvar Prescrição</button>
           </div>
         </FormField>
 
         <FormField label="Upload de exames/imagens">
-          <input ref={inputRef} type="file" multiple onChange={e=>setFiles([...e.target.files])} />
-          <div style={{marginTop:8}}><button className="button" type="button" onClick={onUploadFiles}>Enviar</button></div>
+          <input
+            type="file"
+            multiple
+            ref={inputRef}
+            onChange={e => control.setValue("files", e.target.files ? [...e.target.files] : [])}
+          />
+          <div style={{marginTop:8}}>
+            <button type="button" className="button" onClick={() => onUploadFiles(watch("patientId"), watch("files"))}>Enviar</button>
+          </div>
         </FormField>
+
       </div>
 
       <button className="button" style={{marginTop:12}}>Salvar Atendimento</button>

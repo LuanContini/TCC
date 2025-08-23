@@ -24,6 +24,6 @@ dist-ssr
 *.sw?
 
 
-models
+models/
 faces
 

@@ -1,54 +1,193 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { useForm, Controller } from 'react-hook-form'
+import { yupResolver } from '@hookform/resolvers/yup'
+import { IMaskInput } from 'react-imask'
 import FormField from '../../components/FormField'
 import { getProfessional, saveProfessional } from '../../services/professionals'
+import { profissionalSchema } from '../../validations/profissionalSchema'
 
 const empty = {
-  name:'', cpf:'', reg:'', specialty:'',
-  email:'', phone:'',
-  schedule: '', // ex.: "Seg-Sex 08:00-12:00, 14:00-18:00"
-  personalCalendarUrl:'', // URL de agenda pessoal (Google Calendar)
-  active:true
+  nomeComp:'', cpf:'', rg:'', tipoConc:'', codiConc:'', codiConc_UF:'',
+  email:'', telefone:'', logradouro:'', numero:'', complemento:'',
+  bairro:'', cidade:'', estado:'', cep:'', codiPais:'', codiCidade:'',
+  disponibilidade: null,
+  status: 'A'
 }
 
 export default function ProfissionalForm(){
-  const [data, setData] = useState(empty)
   const { id } = useParams()
   const nav = useNavigate()
-  useEffect(()=>{ if(id){ getProfessional(id).then(setData) } },[id])
-  const onChange = (k,v)=> setData(d=>({ ...d, [k]: v }))
 
-  async function onSubmit(e){
-    e.preventDefault()
-    await saveProfessional({ id, ...data })
+  const { register, handleSubmit, control, reset, formState: { errors } } = useForm({
+    resolver: yupResolver(profissionalSchema),
+    defaultValues: empty
+  })
+
+  useEffect(()=>{
+    if(id){
+      getProfessional(id).then(d=>{
+        // remover máscaras para formulário
+        d.cpf = d.cpf?.replace(/\D/g,'')
+        d.telefone = d.telefone?.replace(/\D/g,'')
+        d.cep = d.cep?.replace(/\D/g,'')
+        reset(d)
+      })
+    }
+  }, [id, reset])
+
+  const onSubmit = async (formData) => {
+    await saveProfessional({ id, ...formData })
     nav('/profissionais')
   }
 
   return (
-    <form className="card" onSubmit={onSubmit}>
+    <form className="card" onSubmit={handleSubmit(onSubmit)}>
       <h2>{id ? 'Editar' : 'Novo'} Profissional</h2>
       <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:12}}>
-        <FormField label="Nome completo"><input className="input" value={data.name} onChange={e=>onChange('name', e.target.value)} /></FormField>
-        <FormField label="CPF"><input className="input" value={data.cpf} onChange={e=>onChange('cpf', e.target.value)} /></FormField>
-        <FormField label="CRM/COREN"><input className="input" value={data.reg} onChange={e=>onChange('reg', e.target.value)} /></FormField>
-        <FormField label="Especialidade"><input className="input" value={data.specialty} onChange={e=>onChange('specialty', e.target.value)} /></FormField>
-        <FormField label="E-mail"><input className="input" value={data.email} onChange={e=>onChange('email', e.target.value)} /></FormField>
-        <FormField label="Telefone"><input className="input" value={data.phone} onChange={e=>onChange('phone', e.target.value)} /></FormField>
-        <FormField label="Horários de atendimento (texto)">
-          <input className="input" placeholder="Seg-Sex 08:00-12:00, 14:00-18:00"
-            value={data.schedule} onChange={e=>onChange('schedule', e.target.value)} />
+
+        <FormField label="Nome completo">
+          <input className="input" {...register("nomeComp")} />
+          {errors.nomeComp && <p>{errors.nomeComp.message}</p>}
         </FormField>
-        <FormField label="Agenda pessoal (URL)">
-          <input className="input" placeholder="https://calendar.google.com/..."
-            value={data.personalCalendarUrl} onChange={e=>onChange('personalCalendarUrl', e.target.value)} />
+
+        <FormField label="CPF">
+          <Controller
+            name="cpf"
+            control={control}
+            render={({ field: { onChange, value } }) => (
+              <IMaskInput
+                mask="000.000.000-00"
+                value={value}
+                onAccept={val => onChange(val.replace(/\D/g,''))}
+                className="input"
+              />
+            )}
+          />
+          {errors.cpf && <p>{errors.cpf.message}</p>}
         </FormField>
+
+        <FormField label="RG">
+          <Controller
+            name="rg"
+            control={control}
+            render={({ field: { onChange, value } }) => (
+              <IMaskInput
+                mask="00.000.000-0"
+                value={value}
+                onAccept={val => onChange(val.replace(/\D/g,''))}
+                className="input"
+              />
+            )}
+          />
+          {errors.rg && <p>{errors.rg.message}</p>}
+        </FormField>
+
+        <FormField label="Telefone">
+          <Controller
+            name="telefone"
+            control={control}
+            render={({ field: { onChange, value } }) => (
+              <IMaskInput
+                mask="(00)00000-0000"
+                value={value}
+                onAccept={val => onChange(val.replace(/\D/g,''))}
+                className="input"
+              />
+            )}
+          />
+          {errors.telefone && <p>{errors.telefone.message}</p>}
+        </FormField>
+
+        <FormField label="CEP">
+          <Controller
+            name="cep"
+            control={control}
+            render={({ field: { onChange, value } }) => (
+              <IMaskInput
+                mask="00000-000"
+                value={value}
+                onAccept={val => onChange(val.replace(/\D/g,''))}
+                className="input"
+              />
+            )}
+          />
+          {errors.cep && <p>{errors.cep.message}</p>}
+        </FormField>
+
+        <FormField label="E-mail">
+          <input className="input" {...register("email")} />
+          {errors.email && <p>{errors.email.message}</p>}
+        </FormField>
+
+        <FormField label="Logradouro">
+          <input className="input" {...register("logradouro")} />
+          {errors.logradouro && <p>{errors.logradouro.message}</p>}
+        </FormField>
+
+        <FormField label="Número">
+          <input className="input" {...register("numero")} />
+          {errors.numero && <p>{errors.numero.message}</p>}
+        </FormField>
+
+        <FormField label="Complemento">
+          <input className="input" {...register("complemento")} />
+        </FormField>
+
+        <FormField label="Bairro">
+          <input className="input" {...register("bairro")} />
+          {errors.bairro && <p>{errors.bairro.message}</p>}
+        </FormField>
+
+        <FormField label="Cidade">
+          <input className="input" {...register("cidade")} />
+          {errors.cidade && <p>{errors.cidade.message}</p>}
+        </FormField>
+
+        <FormField label="Estado">
+          <input className="input" {...register("estado")} />
+          {errors.estado && <p>{errors.estado.message}</p>}
+        </FormField>
+
+        <FormField label="Código do país">
+          <input className="input" {...register("codiPais")} />
+          {errors.codiPais && <p>{errors.codiPais.message}</p>}
+        </FormField>
+
+        <FormField label="Código da cidade">
+          <input className="input" {...register("codiCidade")} />
+          {errors.codiCidade && <p>{errors.codiCidade.message}</p>}
+        </FormField>
+
+        <FormField label="Tipo de conselho">
+          <input className="input" {...register("tipoConc")} />
+          {errors.tipoConc && <p>{errors.tipoConc.message}</p>}
+        </FormField>
+
+        <FormField label="Código do conselho">
+          <input className="input" {...register("codiConc")} />
+          {errors.codiConc && <p>{errors.codiConc.message}</p>}
+        </FormField>
+
+        <FormField label="UF do conselho">
+          <input className="input" {...register("codiConc_UF")} />
+          {errors.codiConc_UF && <p>{errors.codiConc_UF.message}</p>}
+        </FormField>
+
+        <FormField label="Disponibilidade (número inteiro)">
+          <input type="number" className="input" {...register("disponibilidade")} />
+          {errors.disponibilidade && <p>{errors.disponibilidade.message}</p>}
+        </FormField>
+
         <FormField label="Status">
-          <select className="input" value={data.active ? 'ativo':'inativo'} onChange={e=>onChange('active', e.target.value==='ativo')}>
-            <option value="ativo">Ativo</option>
-            <option value="inativo">Inativo</option>
+          <select className="input" {...register("status")}>
+            <option value="A">Ativo</option>
+            <option value="I">Inativo</option>
           </select>
+          {errors.status && <p>{errors.status.message}</p>}
         </FormField>
       </div>
+
       <button className="button" style={{marginTop:12}}>Salvar</button>
     </form>
   )

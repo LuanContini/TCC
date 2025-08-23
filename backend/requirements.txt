@@ -22,3 +22,4 @@ faiss-cpu==1.8.0           # Busca e comparação de embeddings
 # --- Utilitários ---
 requests==2.32.3           # Requisições HTTP
 Pillow==10.3.0             # Manipulação de imagens
+marshmallow==3.21.1
