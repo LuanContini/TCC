@@ -11,7 +11,7 @@ from app.utils.error_handler import register_error_handlers
 
 def create_app():
     app = Flask(__name__)
-    # init_db(app)
+    init_db(app)
     register_routes(app)
     register_error_handlers(app)
 
