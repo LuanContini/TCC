@@ -12,7 +12,7 @@ profissionais_schema = ProfissionalSchema(many=True)
 
 
 # LISTAR TODOS
-@profissionais_bp.route('/', methods=['GET'])
+@profissionais_bp.route('', methods=['GET'])
 def listar_profissionais():
     profissionais = Profissional.query.all()
     return jsonify(profissionais_schema.dump(profissionais)), 200
@@ -26,7 +26,7 @@ def get_profissional(id):
 
 
 # CRIAR
-@profissionais_bp.route('/', methods=['POST'])
+@profissionais_bp.route('', methods=['POST'])
 def criar_profissional():
     try:
         dados = profissional_schema.load(request.json)

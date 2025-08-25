@@ -1,39 +1,33 @@
-from flask import Flask, request, jsonify
-from flask_jwt_extended import (
-    JWTManager,
-    verify_jwt_in_request,
-    exceptions as jwt_exceptions,
-)
-from .database import db, init_db
-from .routes import register_routes
-from app.utils.error_handler import register_error_handlers
+from flask import Flask
+from flask_jwt_extended import JWTManager
+from flask_cors import CORS
 
+from .database import init_db, db
+from .routes import register_routes
+from .utils.error_handler import register_error_handlers
+import os
+
+jwt = JWTManager()
 
 def create_app():
     app = Flask(__name__)
+    
+    # Inicializa DB
     init_db(app)
+
+    # Configura JWT
+    app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
+    jwt.init_app(app)
+
+    # Configura CORS
+    CORS(
+            app,
+            resources={r"/*": {"origins": "http://localhost:5173"}},
+            supports_credentials=True,
+            methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+        )
+    # Rotas e handlers
     register_routes(app)
     register_error_handlers(app)
-
-    excluded_routes = ["/auth/login", "/auth/register"]
-
-    """
-    @app.before_request
-    def check_jwt():
-        path = request.path
-        # Liberar rotas públicas
-        if any(path.startswith(route) for route in excluded_routes):
-            return None  # libera o acesso
-        
-        # Para as outras rotas, verifica token JWT
-        try:
-            verify_jwt_in_request()
-        except jwt_exceptions.NoAuthorizationError:
-            return jsonify({"msg": "Token não enviado"}), 401
-        except jwt_exceptions.ExpiredSignatureError:
-            return jsonify({"msg": "Token expirado"}), 401
-        except Exception:
-            return jsonify({"msg": "Token inválido"}), 401
-    """
 
     return app

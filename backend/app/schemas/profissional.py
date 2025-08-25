@@ -40,6 +40,7 @@ class ProfissionalSchema(Schema):
     atualizadoEm = fields.DateTime(dump_only=True)
 
     # Validação de CPF e data de nascimento
+    
     @validates_schema
     def validate_cpf_data(self, data, **kwargs):
         cpf = data.get("cpf")
