@@ -46,7 +46,6 @@ function FaceID() {
   // Carrega modelos
 useEffect(() => {
   const loadModels = async () => {
-    // Corrigido: Removido process.env.PUBLIC_URL
     const MODEL_URL = "/models/";
     console.log("Carregando modelos de:", MODEL_URL);
     

@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import { listPatients } from '../../services/patients'
-import { listProfessionals } from '../../services/professionals'
+import { listprofissionais } from '../../services/profissionais'
 import { listSchedules } from '../../services/schedules'
 import { reportScheduledVsDone, reportTopSpecialties } from '../../services/reports'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 
 export default function Dashboard() {
   const [patients, setPatients] = useState([])
-  const [professionals, setProfessionals] = useState([])
+  const [profissionais, setprofissionais] = useState([])
   const [schedules, setSchedules] = useState([])
   const [reportSV, setReportSV] = useState(null)
   const [topSpecialties, setTopSpecialties] = useState([])
@@ -17,11 +17,11 @@ export default function Dashboard() {
       try {
         const [p, pr, s] = await Promise.all([
           listPatients(),
-          listProfessionals(),
+          listprofissionais(),
           listSchedules()
         ])
         setPatients(p)
-        setProfessionals(pr)
+        setprofissionais(pr)
         setSchedules(s)
 
         const [svReport, specialtiesReport] = await Promise.all([
@@ -50,7 +50,7 @@ export default function Dashboard() {
         </div>
         <div className="card">
           <h2>Profissionais</h2>
-          <p>Total: {professionals.length}</p>
+          <p>Total: {profissionais.length}</p>
         </div>
         <div className="card">
           <h2>Agendamentos</h2>
@@ -104,7 +104,7 @@ export default function Dashboard() {
                 <tr key={s.idAgendamento}>
                   <td>{s.codiAgen}</td>
                   <td>{s.patientName || s.patientId}</td>
-                  <td>{s.professionalName || s.professionalId}</td>
+                  <td>{s.profissionaisName || s.profissionaisId}</td>
                   <td>{new Date(s.horario).toLocaleString()}</td>
                   <td>{s.status}</td>
                 </tr>
