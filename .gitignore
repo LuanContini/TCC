@@ -12,6 +12,7 @@ projeto_tcc
 
 # Arquivos de configuração local e variáveis de ambiente
 .env
+*.env
 
 # Logs e arquivos temporários
 *.log
