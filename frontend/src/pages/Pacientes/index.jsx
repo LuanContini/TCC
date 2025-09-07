@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react'
 import DataTable from '../../components/DataTable'
-import { listPatients } from '../../services/patients'
+import { listPacientes } from '../../services/pacientes'
 import { useNavigate } from 'react-router-dom'
 
 export default function PacientesList(){
   const [rows, setRows] = useState([])
   const nav = useNavigate()
 
-  useEffect(()=>{ (async ()=>{ setRows(await listPatients()) })() },[])
+  useEffect(()=>{ (async ()=>{ setRows(await listPacientes()) })() },[])
 
   const columns = [
     { key:'id', header:'ID' },

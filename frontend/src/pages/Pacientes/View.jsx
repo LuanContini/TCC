@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getPatient } from '../../services/patients'
+import { getPaciente } from '../../services/pacientes'
 
 export default function PacienteView(){
   const { id } = useParams()
   const nav = useNavigate()
   const [p, setP] = useState(null)
-  useEffect(()=>{ getPatient(id).then(setP) },[id])
+  useEffect(()=>{ getPaciente(id).then(setP) },[id])
   if(!p) return <p>Carregando...</p>
   return (
     <div className="card">

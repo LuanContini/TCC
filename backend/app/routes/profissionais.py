@@ -1,33 +1,39 @@
-# routes/profissionais.py
 from flask import Blueprint, request, jsonify
 from marshmallow import ValidationError
 from app.models.profissional import Profissional, db
 from app.schemas.profissional import ProfissionalSchema
 from datetime import datetime
+from app.utils.jwt_utils import login_required, role_required
 
 profissionais_bp = Blueprint('profissionais', __name__, url_prefix='/profissionais')
 
 profissional_schema = ProfissionalSchema()
 profissionais_schema = ProfissionalSchema(many=True)
 
-
-# LISTAR TODOS
+# ---------- LISTAR TODOS (apenas precisa estar logado) ----------
 @profissionais_bp.route('', methods=['GET'])
+@login_required
 def listar_profissionais():
+    usuario_id = request.usuario_id  # se precisar usar
     profissionais = Profissional.query.all()
     return jsonify(profissionais_schema.dump(profissionais)), 200
 
 
-# DETALHE POR ID
+# ---------- DETALHE POR ID (apenas precisa estar logado) ----------
 @profissionais_bp.route('/<int:id>', methods=['GET'])
+@login_required
 def get_profissional(id):
+    usuario_id = request.usuario_id  # se precisar usar
     profissional = Profissional.query.get_or_404(id)
     return jsonify(profissional_schema.dump(profissional)), 200
 
 
-# CRIAR
+# ---------- CRIAR (apenas admin) ----------
 @profissionais_bp.route('', methods=['POST'])
+@login_required
+@role_required("admin")
 def criar_profissional():
+    usuario_id = request.usuario_id  # id do admin que está criando
     try:
         dados = profissional_schema.load(request.json)
     except ValidationError as err:
@@ -40,9 +46,12 @@ def criar_profissional():
     return jsonify(profissional_schema.dump(novo)), 201
 
 
-# ATUALIZAR
+# ---------- ATUALIZAR (apenas admin) ----------
 @profissionais_bp.route('/<int:id>', methods=['PUT'])
+@login_required
+@role_required("admin")
 def atualizar_profissional(id):
+    usuario_id = request.usuario_id
     profissional = Profissional.query.get_or_404(id)
 
     try:
@@ -59,9 +68,12 @@ def atualizar_profissional(id):
     return jsonify(profissional_schema.dump(profissional)), 200
 
 
-# DELETAR
+# ---------- DELETAR (apenas admin) ----------
 @profissionais_bp.route('/<int:id>', methods=['DELETE'])
+@login_required
+@role_required("admin")
 def deletar_profissional(id):
+    usuario_id = request.usuario_id
     profissional = Profissional.query.get_or_404(id)
     db.session.delete(profissional)
     db.session.commit()

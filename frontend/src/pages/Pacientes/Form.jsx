@@ -4,7 +4,7 @@ import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { IMaskInput } from "react-imask";
 import FormField from "../../components/FormField";
-import { getPatient, savePatient } from "../../services/patients";
+import { getPaciente, savePaciente } from "../../services/pacientes";
 import { pacienteSchema } from "../../validations/pacienteSchema";
 
 export default function PacienteForm() {
@@ -49,7 +49,7 @@ export default function PacienteForm() {
   // Carrega dados para edição
   useEffect(() => {
     if (id) {
-      getPatient(id).then((data) => {
+      getPaciente(id).then((data) => {
         // Remove máscaras para o formulário
         data.cpf = data.cpf?.replace(/\D/g, "");
         data.rg = data.rg?.replace(/\D/g, "");
@@ -61,7 +61,7 @@ export default function PacienteForm() {
   }, [id, reset]);
 
   async function onSubmit(formData) {
-    await savePatient({ id, ...formData });
+    await savePaciente({ id, ...formData });
     nav("/pacientes");
   }
 

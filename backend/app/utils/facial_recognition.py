@@ -7,14 +7,13 @@ import insightface
 FAISS_INDEX_FILE = "faiss_index.bin"
 ID_MAP_FILE = "id_map.pkl"
 
-# Carrega modelo ArcFace da InsightFace
+# Carrega modelo ArcFace (buffalo_l = modelo robusto)
 model = insightface.app.FaceAnalysis(name='buffalo_l')
 model.prepare(ctx_id=0, det_size=(640, 640))
 
 # FAISS index para embeddings 512D
 dimension = 512
 index = faiss.IndexFlatL2(dimension)
-
 id_map = []
 
 def _load_index():
@@ -35,8 +34,8 @@ def _extract_embedding(image_path: str):
     faces = model.get(img)
     if not faces:
         raise ValueError("Nenhum rosto detectado")
-    # Pega apenas o primeiro rosto detectado
-    embedding = faces[0].embedding
+    embedding = faces[0].embedding.astype(np.float32)
+    embedding /= np.linalg.norm(embedding)  # normalização L2
     return np.array([embedding], dtype=np.float32)
 
 def register_face(image_path: str, db_id: int):
@@ -48,8 +47,11 @@ def register_face(image_path: str, db_id: int):
 def recognize_face(image_path: str, threshold=1.0):
     embedding = _extract_embedding(image_path)
     distances, indices = index.search(embedding, 1)
-    if distances[0][0] <= threshold and indices[0][0] < len(id_map):
-        return id_map[indices[0][0]]
-    return None
 
+    if distances[0][0] <= threshold and indices[0][0] < len(id_map):
+        return id_map[indices[0][0]], float(distances[0][0])
+
+    return None, None
+
+# Carregar FAISS ao iniciar servidor
 _load_index()

@@ -19,9 +19,10 @@ import AgendamentoForm from './pages/Agendamentos/Form'
 import Atendimento from './pages/Atendimento'
 import Relatorios from './pages/Relatorios'
 
-function PrivateRoute({ children }){
-  const { user } = useAuth()
-  return user ? children : <Navigate to="/login" replace />
+function PrivateRoute({ children }) {
+  const { user, loading } = useAuth();
+  if (loading) return <p>Carregando...</p>; 
+  return user ? children : <Navigate to="/login" replace />;
 }
 
 export default function RoutesConfig(){

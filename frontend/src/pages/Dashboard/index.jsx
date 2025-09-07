@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react'
-import { listPatients } from '../../services/patients'
-import { listprofissionais } from '../../services/profissionais'
-import { listSchedules } from '../../services/schedules'
+import { listPacientes } from '../../services/pacientes'
+import { listProfissionais } from '../../services/profissionais'
+import { getAgendamentos } from '../../services/agendamentos'
 import { reportScheduledVsDone, reportTopSpecialties } from '../../services/reports'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 
 export default function Dashboard() {
-  const [patients, setPatients] = useState([])
+  const [pacientes, setpacientes] = useState([])
   const [profissionais, setprofissionais] = useState([])
   const [schedules, setSchedules] = useState([])
   const [reportSV, setReportSV] = useState(null)
@@ -16,11 +16,11 @@ export default function Dashboard() {
     async function fetchData() {
       try {
         const [p, pr, s] = await Promise.all([
-          listPatients(),
-          listprofissionais(),
-          listSchedules()
+          listPacientes(),
+          listProfissionais(),
+          getAgendamentos()
         ])
-        setPatients(p)
+        setpacientes(p)
         setprofissionais(pr)
         setSchedules(s)
 
@@ -46,7 +46,7 @@ export default function Dashboard() {
       <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
         <div className="card">
           <h2>Pacientes</h2>
-          <p>Total: {patients.length}</p>
+          <p>Total: {pacientes.length}</p>
         </div>
         <div className="card">
           <h2>Profissionais</h2>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import DataTable from '../../components/DataTable'
-import { listprofissionais } from '../../services/profissionais'
+import { listProfissionais } from '../../services/profissionais'
 import { useNavigate } from 'react-router-dom'
 
 export default function ProfissionaisList(){
@@ -9,7 +9,7 @@ export default function ProfissionaisList(){
 
   useEffect(() => {
   (async () => {
-    const data = await listprofissionais()
+    const data = await listProfissionais()
     const mapped = data.map(p => ({
       id: p.idProfissional,
       name: p.nomeComp,
