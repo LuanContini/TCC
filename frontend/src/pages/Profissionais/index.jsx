@@ -1,13 +1,27 @@
 import React, { useEffect, useState } from 'react'
 import DataTable from '../../components/DataTable'
-import { listProfessionals } from '../../services/professionals'
+import { listProfissionais } from '../../services/profissionais'
 import { useNavigate } from 'react-router-dom'
 
 export default function ProfissionaisList(){
   const [rows, setRows] = useState([])
   const nav = useNavigate()
 
-  useEffect(()=>{ (async ()=>{ setRows(await listProfessionals()) })() },[])
+  useEffect(() => {
+  (async () => {
+    const data = await listProfissionais()
+    const mapped = data.map(p => ({
+      id: p.idProfissional,
+      name: p.nomeComp,
+      cpf: p.cpf,
+      reg: p.rg,
+      specialty: p.tipoConc,
+      active: p.status === 'A'
+    }))
+    setRows(mapped)
+  })()
+}, [])
+
 
   const columns = [
     { key:'id', header:'ID' },
@@ -24,7 +38,7 @@ export default function ProfissionaisList(){
         <h2>Profissionais</h2>
         <button className="button" onClick={()=>nav('/profissionais/novo')}>Novo</button>
       </div>
-      <DataTable columns={columns} data={rows} onRowClick={(r)=>nav(`/profissionais/${r.id}/editar`)} />
+      <DataTable columns={columns} data={rows} onRowClick={(r)=>nav(`/profissionais/${r.id}`)} />
     </div>
   )
 }

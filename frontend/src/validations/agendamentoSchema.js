@@ -1,49 +1,32 @@
-import * as yup from "yup";
+import * as yup from "yup"
 
-export const agendamentoSchema = yup.object({
-  date: yup
-    .date()
-    .typeError("Data inválida")
-    .required("Data é obrigatória"),
-  
-  time: yup
-    .string()
-    .matches(/^([0-1]\d|2[0-3]):([0-5]\d)$/, "Hora inválida")
-    .required("Hora é obrigatória"),
-  
-  patientId: yup
+export const agendamentoSchema = yup.object().shape({
+  codiAgen: yup
     .number()
-    .typeError("ID do paciente deve ser um número")
-    .required("Paciente é obrigatório"),
-
-  professionalId: yup
-    .number()
-    .typeError("ID do profissional deve ser um número")
-    .required("Profissional é obrigatório"),
-
-  type: yup
+    .transform((value, originalValue) => (originalValue === "" ? undefined : value))
+    .required("Código é obrigatório"),
+  canalAgen: yup
     .string()
-    .oneOf(["consulta","retorno","exame"], "Tipo inválido")
-    .required("Tipo é obrigatório"),
-
+    .oneOf(["T","W","O"], "Canal inválido")
+    .required("Canal é obrigatório"),
   status: yup
     .string()
-    .oneOf(["marcado","confirmado","cancelado","realizado"], "Status inválido")
+    .oneOf(["PE","CN","CP","CA","RE"], "Status inválido")
     .required("Status é obrigatório"),
-
-  reason: yup
-    .string()
-    .max(255, "Motivo deve ter no máximo 255 caracteres")
-    .nullable(),
-
-  channel: yup
-    .string()
-    .oneOf(["telefone","whatsapp","online"], "Canal inválido")
-    .required("Canal é obrigatório"),
-
-  duration: yup
+  horario: yup
+    .date()
+    .transform((value, originalValue) => (originalValue === "" ? undefined : value))
+    .required("Horário é obrigatório"),
+  idProfissional: yup
     .number()
-    .integer("Duração deve ser um número inteiro")
-    .min(1, "Duração mínima 1 minuto")
-    .required("Duração é obrigatória")
-});
+    .transform((value, originalValue) => (originalValue === "" ? undefined : value))
+    .required("Profissional é obrigatório"),
+  idPaciente: yup
+    .number()
+    .transform((value, originalValue) => (originalValue === "" ? undefined : value))
+    .required("Paciente é obrigatório"),
+  idAtendimento: yup
+    .number()
+    .transform((value, originalValue) => (originalValue === "" ? undefined : value))
+    .required("Atendimento é obrigatório"),
+})

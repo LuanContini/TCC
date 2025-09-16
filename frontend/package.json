@@ -15,6 +15,7 @@
     "@tensorflow/tfjs": "^4.22.0",
     "axios": "^1.11.0",
     "face-api.js": "^0.22.2",
+    "jwt-decode": "^3.1.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-hook-form": "^7.62.0",

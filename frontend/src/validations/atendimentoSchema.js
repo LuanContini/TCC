@@ -1,33 +1,22 @@
-import * as yup from "yup";
+// validations/atendimentoSchema.js
+import * as yup from "yup"
 
-export const atendimentoSchema = yup.object({
-  patientId: yup
-    .number()
-    .typeError("ID do paciente deve ser um número")
-    .required("Paciente é obrigatório"),
-
-  symptoms: yup
+export const atendimentoSchema = yup.object().shape({
+  tipoAten: yup
     .string()
-    .max(500, "Sintomas deve ter no máximo 500 caracteres")
-    .required("Sintomas são obrigatórios"),
-
-  diagnosis: yup
+    .required("Tipo de atendimento é obrigatório")
+    .max(3, "Tipo deve ter no máximo 3 caracteres")
+    .matches(/^[A-Za-z]+$/, "Tipo deve conter apenas letras"),
+  
+  justAten: yup
     .string()
-    .max(500, "Diagnóstico deve ter no máximo 500 caracteres")
-    .required("Diagnóstico é obrigatório"),
-
-  notes: yup
+    .nullable()
+    .max(255, "Justificativa deve ter no máximo 255 caracteres"),
+  
+  codiAten: yup
     .string()
-    .max(1000, "Anotações devem ter no máximo 1000 caracteres")
-    .nullable(),
-
-  alerts: yup
-    .string()
-    .max(255, "Alertas devem ter no máximo 255 caracteres")
-    .nullable(),
-
-  prescriptionText: yup
-    .string()
-    .max(1000, "Prescrição deve ter no máximo 1000 caracteres")
-    .nullable(),
+    .required("Código de atendimento é obrigatório")
+    .max(6, "Código deve ter no máximo 6 caracteres")
+    .matches(/^[A-Z0-9]+$/, "Código deve conter apenas letras maiúsculas e números")
+    .transform((value) => value ? value.toUpperCase() : value) // Converte para maiúsculas
 });
