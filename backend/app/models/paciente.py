@@ -1,5 +1,4 @@
 from app.database import db
-
 from sqlalchemy.sql import func
 
 class Paciente(db.Model):
@@ -30,9 +29,7 @@ class Paciente(db.Model):
     observacao = db.Column(db.String(255))
     criadoEm = db.Column(db.DateTime, server_default=func.now())
     atualizadoEm = db.Column(db.DateTime, server_default=func.now(), onupdate=func.now())
-    idAgendamento = db.Column(db.Integer, db.ForeignKey('agendamento.idAgendamento', onupdate='RESTRICT', ondelete='CASCADE'), nullable=False)
-
-    agendamento = db.relationship('Agendamento', backref='pacientes')
+    
 
     __table_args__ = (
         db.Index('idx_paciente_status', 'status'),

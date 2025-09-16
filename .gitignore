@@ -25,6 +25,8 @@ backend/.env
 # Pasta de uploads, se houver (exemplo para imagens que podem ser geradas)
 uploads/
 media/
+faiss_index.bin
+id_map.pkl
 
 # Diretórios node_modules se frontend estiver no mesmo repositório
 node_modules/

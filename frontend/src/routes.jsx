@@ -12,9 +12,12 @@ import PacienteView from './pages/Pacientes/View'
 
 import ProfissionaisList from './pages/Profissionais'
 import ProfissionalForm from './pages/Profissionais/Form'
+import ProfissionalView from './pages/Profissionais/View'
 
 import Agendamentos from './pages/Agendamentos'
 import AgendamentoForm from './pages/Agendamentos/Form'
+import AgendamentoView from './pages/Agendamentos/View'
+
 
 import Atendimento from './pages/Atendimento'
 import Relatorios from './pages/Relatorios'
@@ -41,8 +44,11 @@ export default function RoutesConfig(){
       <Route path="/profissionais" element={<PrivateRoute><ProfissionaisList /></PrivateRoute>} />
       <Route path="/profissionais/novo" element={<PrivateRoute><ProfissionalForm /></PrivateRoute>} />
       <Route path="/profissionais/:id/editar" element={<PrivateRoute><ProfissionalForm /></PrivateRoute>} />
+      <Route path="/profissionais/:id" element={<PrivateRoute><ProfissionalView /></PrivateRoute>} />
 
       <Route path="/agendamentos" element={<PrivateRoute><Agendamentos /></PrivateRoute>} />
+      <Route path="/agendamentos/:id" element={<PrivateRoute><AgendamentoView /></PrivateRoute>} />
+      <Route path="/agendamentos/:id/editar" element={<PrivateRoute><AgendamentoForm /></PrivateRoute>} />
       <Route path="/agendamentos/novo" element={<PrivateRoute><AgendamentoForm /></PrivateRoute>} />
 
       <Route path="/atendimento" element={<PrivateRoute><Atendimento /></PrivateRoute>} />

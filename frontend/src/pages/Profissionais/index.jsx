@@ -38,7 +38,7 @@ export default function ProfissionaisList(){
         <h2>Profissionais</h2>
         <button className="button" onClick={()=>nav('/profissionais/novo')}>Novo</button>
       </div>
-      <DataTable columns={columns} data={rows} onRowClick={(r)=>nav(`/profissionais/${r.id}/editar`)} />
+      <DataTable columns={columns} data={rows} onRowClick={(r)=>nav(`/profissionais/${r.id}`)} />
     </div>
   )
 }

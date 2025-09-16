@@ -14,7 +14,7 @@ profissionais_schema = ProfissionalSchema(many=True)
 @profissionais_bp.route('', methods=['GET'])
 @login_required
 def listar_profissionais():
-    usuario_id = request.usuario_id  # se precisar usar
+    usuario_id = request.usuario_id 
     profissionais = Profissional.query.all()
     return jsonify(profissionais_schema.dump(profissionais)), 200
 
@@ -23,7 +23,7 @@ def listar_profissionais():
 @profissionais_bp.route('/<int:id>', methods=['GET'])
 @login_required
 def get_profissional(id):
-    usuario_id = request.usuario_id  # se precisar usar
+    usuario_id = request.usuario_id  
     profissional = Profissional.query.get_or_404(id)
     return jsonify(profissional_schema.dump(profissional)), 200
 
@@ -33,7 +33,7 @@ def get_profissional(id):
 @login_required
 @role_required("admin")
 def criar_profissional():
-    usuario_id = request.usuario_id  # id do admin que está criando
+    usuario_id = request.usuario_id  
     try:
         dados = profissional_schema.load(request.json)
     except ValidationError as err:
@@ -78,3 +78,29 @@ def deletar_profissional(id):
     db.session.delete(profissional)
     db.session.commit()
     return jsonify({"mensagem": f"Profissional {id} deletado com sucesso"}), 200
+
+
+@profissionais_bp.route('/<int:id>', methods=['PATCH'])
+@login_required
+@role_required("admin")
+def atualizar_parcial_profissional(id):
+    usuario_id = request.usuario_id
+    profissional = Profissional.query.get_or_404(id)
+
+    try:
+        dados = request.get_json()
+        
+        for campo, valor in dados.items():
+            if hasattr(profissional, campo) and campo not in ['idProfissional', 'criadoEm']:
+                setattr(profissional, campo, valor)
+
+        profissional.atualizadoEm = datetime.utcnow()
+        db.session.commit()
+
+        return jsonify(profissional_schema.dump(profissional)), 200
+        
+    except ValidationError as err:
+        return jsonify(err.messages), 400
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"erro": f"Erro ao atualizar profissional: {str(e)}"}), 500
