@@ -18,6 +18,9 @@ import Agendamentos from './pages/Agendamentos'
 import AgendamentoForm from './pages/Agendamentos/Form'
 import AgendamentoView from './pages/Agendamentos/View'
 
+import UsuarioForm from './pages/Usuarios/Form'
+import UsuariosList from './pages/Usuarios/index'
+import AlterarSenha from './pages/Usuarios/AlterarSenha'
 
 import Atendimento from './pages/Atendimento'
 import Relatorios from './pages/Relatorios'
@@ -50,6 +53,12 @@ export default function RoutesConfig(){
       <Route path="/agendamentos/:id" element={<PrivateRoute><AgendamentoView /></PrivateRoute>} />
       <Route path="/agendamentos/:id/editar" element={<PrivateRoute><AgendamentoForm /></PrivateRoute>} />
       <Route path="/agendamentos/novo" element={<PrivateRoute><AgendamentoForm /></PrivateRoute>} />
+
+      <Route path="/usuarios" element={<PrivateRoute><UsuariosList /></PrivateRoute>} />
+      <Route path="/usuarios/novo" element={<PrivateRoute><UsuarioForm /></PrivateRoute>} />
+      <Route path="/usuarios/:id" element={<PrivateRoute><UsuarioForm /></PrivateRoute>} />
+      <Route path="/alterar-senha" element={<PrivateRoute><AlterarSenha /></PrivateRoute>} />
+
 
       <Route path="/atendimento" element={<PrivateRoute><Atendimento /></PrivateRoute>} />
       <Route path="/relatorios" element={<PrivateRoute><Relatorios /></PrivateRoute>} />

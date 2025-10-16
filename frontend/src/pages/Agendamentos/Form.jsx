@@ -104,66 +104,72 @@ export default function AgendamentoForm() {
   }, [id, reset]);
   
   async function onSubmit(formData) {
-    setLoading(true);
-    setServerErrors({});
+  setLoading(true);
+  setServerErrors({});
+  
+  try {
+    // Cria payload apenas com campos editáveis
+    const payload = {
+      codiAgen: parseInt(formData.codiAgen),
+      canalAgen: formData.canalAgen,
+      status: formData.status,
+      horario: new Date(formData.horario).toISOString(),
+      idProfissional: parseInt(formData.idProfissional),
+      idPaciente: parseInt(formData.idPaciente),
+      idAtendimento: parseInt(formData.idAtendimento)
+    };
     
-    try {
-      const payload = {
-        ...formData,
-        codiAgen: parseInt(formData.codiAgen) 
-      };
-      
-      console.log("Enviando para API:", payload);
-      
-      let response;
-      if (id) {
-        response = await updateAgendamento(id, payload);
-      } else {
-        response = await saveAgendamento(payload);
-      }
-      
-      // Verifica se a resposta tem success: true ou se foi bem sucedida
-      if (response.success || response.id) {
-        navigate("/agendamentos");
-      } else {
-        alert(response.message || "Erro ao salvar agendamento");
-      }
-      
-    } catch (error) {
-      console.error("Erro completo:", error);
-      
-      if (error.response?.data) {
-        const errorData = error.response.data;
-        
-        // Se for erro de validação do Marshmallow
-        if (errorData.errors) {
-          Object.entries(errorData.errors).forEach(([field, messages]) => {
-            setError(field, {
-              type: "server",
-              message: Array.isArray(messages) ? messages.join(", ") : messages
-            });
-          });
-        } 
-        // Se for erro de conflito de horário
-        else if (errorData.message && errorData.message.includes("conflito")) {
-          setError("horario", {
-            type: "server",
-            message: errorData.message
-          });
-        }
-        // Outros erros do servidor
-        else if (errorData.message) {
-          setServerErrors({ general: errorData.message });
-        }
-      } else {
-        setServerErrors({ general: "Erro de conexão com o servidor" });
-      }
-    } finally {
-      setLoading(false);
+    console.log("Enviando para API:", payload);
+    
+    let response;
+    if (id) {
+      response = await updateAgendamento(id, payload);
+    } else {
+      response = await saveAgendamento(payload);
     }
+    
+    if (response.success || response.idAgendamento) {
+      navigate("/agendamentos");
+    } else {
+      alert(response.message || "Erro ao salvar agendamento");
+    }
+    
+  } catch (error) {
+    console.error("Erro completo:", error);
+    
+    if (error.response?.data) {
+      const errorData = error.response.data;
+      
+      // Se for erro de validação do Marshmallow
+      if (errorData.errors) {
+        Object.entries(errorData.errors).forEach(([field, messages]) => {
+          setError(field, {
+            type: "server",
+            message: Array.isArray(messages) ? messages.join(", ") : messages
+          });
+        });
+      } 
+      // Se for erro de conflito de horário
+      else if (errorData.message && errorData.message.includes("conflito")) {
+        setError("horario", {
+          type: "server",
+          message: errorData.message
+        });
+      }
+      // Outros erros do servidor
+      else if (errorData.message) {
+        setServerErrors({ general: errorData.message });
+      } else if (errorData.erro) {
+        setServerErrors({ general: errorData.erro });
+      }
+    } else {
+      setServerErrors({ general: "Erro de conexão com o servidor" });
+    }
+  } finally {
+    setLoading(false);
   }
+}
 
-  // Componente personalizado para mostrar erros
   const ErrorMessage = ({ error }) => {
     if (!error) return null;
     

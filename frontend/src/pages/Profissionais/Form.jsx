@@ -1,112 +1,81 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useForm, Controller } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
+import React, { useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import { Controller } from 'react-hook-form';
 import { IMaskInput } from 'react-imask';
-import FormField from '../../components/FormField';
+
+// Componentes e hooks
+import { EnhancedFormField } from '../../components/EnhancedFormField';
+import { FormErrors } from '../../components/FormErrors';
+import { useFormHandler } from '../../hooks/useFormHandler';
 import { getProfissionais, saveProfissionais } from '../../services/profissionais';
 import { profissionalSchema } from '../../validations/profissionalSchema';
 
-const estadosBrasil = [
-  "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG",
-  "PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"
-];
+// Utilitários
+import { estadosBrasil, SEXO_OPTIONS, STATUS_OPTIONS } from '../../utils/constants';
 
 const empty = {
-  nomeComp:'', cpf:'', rg:'', tipoConc:'', codiConc:'', codiConc_UF:'',
-  email:'', telefone:'', logradouro:'', numero:'', complemento:'',
-  bairro:'', cidade:'', estado:'', cep:'', codiPais:'', codiCidade:'',
-  dataNasc:'', disponibilidade:'', status:'A', sexo:''
+  nomeComp: '', cpf: '', rg: '', tipoConc: '', codiConc: '', codiConc_UF: '',
+  email: '', telefone: '', logradouro: '', numero: '', complemento: '',
+  bairro: '', cidade: '', estado: '', cep: '', codiPais: '', codiCidade: '',
+  dataNasc: '', disponibilidade: '', status: 'A', sexo: ''
 };
 
 export default function ProfissionalForm() {
   const { id } = useParams();
-  const nav = useNavigate();
-  const [loading, setLoading] = useState(false);
-
-  const { register, handleSubmit, control, reset, setError, formState: { errors } } = useForm({
-    resolver: yupResolver(profissionalSchema),
-    defaultValues: empty
-  });
+  
+  const {
+    register,
+    handleSubmit,
+    control,
+    reset,
+    errors,
+    loading,
+    setLoading,
+    serverErrors,
+    onSubmitHandler,
+    navigate
+  } = useFormHandler(profissionalSchema, empty);
 
   useEffect(() => {
-    if(id){
+    if (id) {
       setLoading(true);
       (async () => {
         try {
-          const d = await getProfissionais(id);
+          const data = await getProfissionais(id);
           reset({
             ...empty,
-            ...d,
-            cpf: d.cpf?.replace(/\D/g,'') || '',
-            telefone: d.telefone?.replace(/\D/g,'') || '',
-            cep: d.cep?.replace(/\D/g,'') || '',
-            dataNasc: d.dataNasc ? d.dataNasc.split('T')[0] : '',
-            sexo: d.sexo || '',
-            estado: d.estado || '',
-            status: d.status || 'A'
+            ...data,
+            cpf: data.cpf?.replace(/\D/g, '') || '',
+            telefone: data.telefone?.replace(/\D/g, '') || '',
+            cep: data.cep?.replace(/\D/g, '') || '',
+            dataNasc: data.dataNasc ? data.dataNasc.split('T')[0] : '',
+            sexo: data.sexo || '',
+            estado: data.estado || '',
+            status: data.status || 'A'
           });
-        } catch(e) {
-          console.error("Erro ao buscar profissional:", e);
+        } catch (error) {
+          console.error("Erro ao buscar profissional:", error);
           alert("Erro ao carregar dados do profissional");
         } finally {
           setLoading(false);
         }
       })();
     }
-  }, [id, reset]);
+  }, [id, reset, setLoading]);
 
   const onSubmit = async (formData) => {
-    setLoading(true);
     const { criadoEm, atualizadoEm, ...cleanData } = formData;
 
-    if(cleanData.dataNasc instanceof Date){
+    if (cleanData.dataNasc instanceof Date) {
       cleanData.dataNasc = cleanData.dataNasc.toISOString().split('T')[0];
     }
 
-    try {
-      await saveProfissionais(cleanData);
-      nav('/profissionais');
-    } catch (error) {
-      const backendErrors = error.response?.data;
-      console.error('Erro ao salvar:', backendErrors);
-      if (backendErrors) {
-        Object.entries(backendErrors).forEach(([field, messages]) => {
-          setError(field, { type: 'server', message: Array.isArray(messages) ? messages.join(', ') : messages });
-        });
-      } else {
-        alert("Erro inesperado ao salvar.");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Componente personalizado para mostrar erros
-  const ErrorMessage = ({ error }) => {
-    if (!error) return null;
-    
-    return (
-      <div style={{ 
-        color: '#e74c3c', 
-        fontSize: '0.875rem', 
-        marginTop: '0.25rem',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.25rem'
-      }}>
-        <span style={{ fontSize: '1rem' }}>⚠️</span>
-        {error.message}
-      </div>
+    await onSubmitHandler(
+      cleanData,
+      saveProfissionais,
+      '/profissionais',
+      `Profissional ${id ? 'atualizado' : 'cadastrado'} com sucesso!`
     );
-  };
-
-  // Estilo para campos com erro
-  const getInputStyle = (fieldName) => {
-    return errors[fieldName] ? {
-      borderColor: '#e74c3c',
-      backgroundColor: '#fdf2f2'
-    } : {};
   };
 
   return (
@@ -114,31 +83,15 @@ export default function ProfissionalForm() {
       {/* Cabeçalho */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '2rem' }}>
         <div>
-          <h2 style={{ margin: 0, color: '#2c3e50' }}>{id ? "Editar" : "Novo"} Profissional</h2>
-          {Object.keys(errors).length > 0 && (
-            <div style={{ 
-              backgroundColor: '#fef2f2', 
-              border: '1px solid #fecaca', 
-              color: '#dc2626',
-              padding: '0.75rem',
-              borderRadius: '0.375rem',
-              marginTop: '1rem',
-              fontSize: '0.875rem'
-            }}>
-              <strong>Por favor, corrija os seguintes erros:</strong>
-              <ul style={{ margin: '0.5rem 0 0 1rem', padding: 0 }}>
-                {Object.entries(errors).map(([field, error]) => (
-                  <li key={field}>{error.message}</li>
-                ))}
-              </ul>
-            </div>
-          )}
+          <h2 style={{ margin: 0, color: '#2c3e50' }}>
+            {id ? "Editar" : "Novo"} Profissional
+          </h2>
         </div>
         <div>
           <button 
             type="button" 
             className="button secondary" 
-            onClick={() => nav(-1)}
+            onClick={() => navigate(-1)}
             style={{ marginRight: '0.5rem' }}
             disabled={loading}
           >
@@ -154,20 +107,22 @@ export default function ProfissionalForm() {
         </div>
       </div>
 
-      <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem'}}>
+      {/* Exibição centralizada de erros */}
+      <FormErrors errors={errors} serverErrors={serverErrors} />
 
-        <FormField label="Nome completo" error={errors.nomeComp}>
+      <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem'}}>
+
+        {/* Dados Pessoais */}
+        <EnhancedFormField label="Nome completo" error={errors.nomeComp} required>
           <input
             className="input"
             {...register("nomeComp")}
             placeholder="Ex: João da Silva"
             maxLength={50}
-            style={getInputStyle('nomeComp')}
           />
-          <ErrorMessage error={errors.nomeComp} />
-        </FormField>
+        </EnhancedFormField>
 
-        <FormField label="CPF" error={errors.cpf}>
+        <EnhancedFormField label="CPF" error={errors.cpf} required>
           <Controller
             name="cpf"
             control={control}
@@ -175,17 +130,15 @@ export default function ProfissionalForm() {
               <IMaskInput
                 mask="000.000.000-00"
                 value={value || ''}
-                onAccept={val => onChange(val.replace(/\D/g,''))}
+                onAccept={val => onChange(val.replace(/\D/g, ''))}
                 className="input"
                 placeholder="Ex: 123.456.789-00"
-                style={getInputStyle('cpf')}
               />
             )}
           />
-          <ErrorMessage error={errors.cpf} />
-        </FormField>
+        </EnhancedFormField>
 
-        <FormField label="RG" error={errors.rg}>
+        <EnhancedFormField label="RG" error={errors.rg}>
           <Controller
             name="rg"
             control={control}
@@ -193,17 +146,15 @@ export default function ProfissionalForm() {
               <IMaskInput
                 mask="00.000.000-0"
                 value={value || ''}
-                onAccept={val => onChange(val.replace(/\D/g,''))}
+                onAccept={val => onChange(val.replace(/\D/g, ''))}
                 className="input"
                 placeholder="Ex: 12.345.678-9"
-                style={getInputStyle('rg')}
               />
             )}
           />
-          <ErrorMessage error={errors.rg} />
-        </FormField>
+        </EnhancedFormField>
 
-        <FormField label="Data de Nascimento" error={errors.dataNasc}>
+        <EnhancedFormField label="Data de Nascimento" error={errors.dataNasc} required>
           <Controller
             name="dataNasc"
             control={control}
@@ -214,30 +165,30 @@ export default function ProfissionalForm() {
                 {...field}
                 value={field.value || ''}
                 max={new Date().toISOString().split("T")[0]}
-                style={getInputStyle('dataNasc')}
               />
             )}
           />
-          <ErrorMessage error={errors.dataNasc} />
-        </FormField>
+        </EnhancedFormField>
 
-        <FormField label="Sexo" error={errors.sexo}>
+        <EnhancedFormField label="Sexo" error={errors.sexo} required>
           <Controller
             name="sexo"
             control={control}
             render={({ field }) => (
-              <select {...field} className="input" value={field.value || ''} style={getInputStyle('sexo')}>
+              <select {...field} className="input" value={field.value || ''}>
                 <option value="">Selecione...</option>
-                <option value="M">Masculino</option>
-                <option value="F">Feminino</option>
-                <option value="O">Outro</option>
+                {SEXO_OPTIONS.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             )}
           />
-          <ErrorMessage error={errors.sexo} />
-        </FormField>
+        </EnhancedFormField>
 
-        <FormField label="Telefone" error={errors.telefone}>
+        {/* Contato */}
+        <EnhancedFormField label="Telefone" error={errors.telefone} required>
           <Controller
             name="telefone"
             control={control}
@@ -245,17 +196,25 @@ export default function ProfissionalForm() {
               <IMaskInput
                 mask="(00)00000-0000"
                 value={value || ''}
-                onAccept={val => onChange(val.replace(/\D/g,''))}
+                onAccept={val => onChange(val.replace(/\D/g, ''))}
                 className="input"
                 placeholder="Ex: (11)91234-5678"
-                style={getInputStyle('telefone')}
               />
             )}
           />
-          <ErrorMessage error={errors.telefone} />
-        </FormField>
+        </EnhancedFormField>
 
-        <FormField label="CEP" error={errors.cep}>
+        <EnhancedFormField label="E-mail" error={errors.email} required>
+          <input
+            className="input"
+            {...register("email")}
+            placeholder="Ex: email@dominio.com"
+            maxLength={80}
+          />
+        </EnhancedFormField>
+
+        {/* Endereço */}
+        <EnhancedFormField label="CEP" error={errors.cep} required>
           <Controller
             name="cep"
             control={control}
@@ -263,178 +222,153 @@ export default function ProfissionalForm() {
               <IMaskInput
                 mask="00000-000"
                 value={value || ''}
-                onAccept={val => onChange(val.replace(/\D/g,''))}
+                onAccept={val => onChange(val.replace(/\D/g, ''))}
                 className="input"
                 placeholder="Ex: 12345-678"
-                style={getInputStyle('cep')}
               />
             )}
           />
-          <ErrorMessage error={errors.cep} />
-        </FormField>
+        </EnhancedFormField>
 
-        <FormField label="E-mail" error={errors.email}>
-          <input
-            className="input"
-            {...register("email")}
-            placeholder="Ex: email@dominio.com"
-            maxLength={80}
-            style={getInputStyle('email')}
-          />
-          <ErrorMessage error={errors.email} />
-        </FormField>
-
-        <FormField label="Logradouro" error={errors.logradouro}>
+        <EnhancedFormField label="Logradouro" error={errors.logradouro} required>
           <input
             className="input"
             {...register("logradouro")}
             placeholder="Ex: Rua das Flores"
             maxLength={100}
-            style={getInputStyle('logradouro')}
           />
-          <ErrorMessage error={errors.logradouro} />
-        </FormField>
+        </EnhancedFormField>
 
-        <FormField label="Número" error={errors.numero}>
+        <EnhancedFormField label="Número" error={errors.numero} required>
           <input
             className="input"
             {...register("numero")}
             placeholder="Ex: 123"
             maxLength={10}
-            style={getInputStyle('numero')}
           />
-          <ErrorMessage error={errors.numero} />
-        </FormField>
+        </EnhancedFormField>
 
-        <FormField label="Complemento" error={errors.complemento}>
+        <EnhancedFormField label="Complemento" error={errors.complemento}>
           <input
             className="input"
             {...register("complemento")}
             placeholder="Ex: Apto 101"
             maxLength={50}
-            style={getInputStyle('complemento')}
           />
-          <ErrorMessage error={errors.complemento} />
-        </FormField>
+        </EnhancedFormField>
 
-        <FormField label="Bairro" error={errors.bairro}>
+        <EnhancedFormField label="Bairro" error={errors.bairro} required>
           <input
             className="input"
             {...register("bairro")}
             placeholder="Ex: Centro"
             maxLength={50}
-            style={getInputStyle('bairro')}
           />
-          <ErrorMessage error={errors.bairro} />
-        </FormField>
+        </EnhancedFormField>
 
-        <FormField label="Cidade" error={errors.cidade}>
+        <EnhancedFormField label="Cidade" error={errors.cidade}>
           <input
             className="input"
             {...register("cidade")}
             placeholder="Ex: São Paulo"
             maxLength={50}
-            style={getInputStyle('cidade')}
           />
-          <ErrorMessage error={errors.cidade} />
-        </FormField>
+        </EnhancedFormField>
 
-        <FormField label="Estado" error={errors.estado}>
+        <EnhancedFormField label="Estado" error={errors.estado} required>
           <Controller
             name="estado"
             control={control}
             render={({ field }) => (
-              <select {...field} className="input" value={field.value || ''} style={getInputStyle('estado')}>
+              <select {...field} className="input" value={field.value || ''}>
                 <option value="">Selecione...</option>
-                {estadosBrasil.map(uf => <option key={uf} value={uf}>{uf}</option>)}
+                {estadosBrasil.map(uf => (
+                  <option key={uf} value={uf}>{uf}</option>
+                ))}
               </select>
             )}
           />
-          <ErrorMessage error={errors.estado} />
-        </FormField>
+        </EnhancedFormField>
 
-        <FormField label="Código do país" error={errors.codiPais}>
+        <EnhancedFormField label="Código do país" error={errors.codiPais} required>
           <input
             className="input"
             {...register("codiPais")}
             placeholder="Ex: 105"
             maxLength={3}
             minLength={3}
-            style={getInputStyle('codiPais')}
           />
-          <ErrorMessage error={errors.codiPais} />
-        </FormField>
+        </EnhancedFormField>
 
-        <FormField label="Código da cidade" error={errors.codiCidade}>
+        <EnhancedFormField label="Código da cidade" error={errors.codiCidade} required>
           <input
             className="input"
             {...register("codiCidade")}
             placeholder="Ex: 12"
             maxLength={2}
             minLength={2}
-            style={getInputStyle('codiCidade')}
           />
-          <ErrorMessage error={errors.codiCidade} />
-        </FormField>
+        </EnhancedFormField>
 
-        <FormField label="Tipo de conselho" error={errors.tipoConc}>
+        {/* Dados Profissionais */}
+        <EnhancedFormField label="Tipo de conselho" error={errors.tipoConc} required>
           <input
             className="input"
             {...register("tipoConc")}
             placeholder="Ex: CRM"
             maxLength={5}
-            style={getInputStyle('tipoConc')}
           />
-          <ErrorMessage error={errors.tipoConc} />
-        </FormField>
+        </EnhancedFormField>
 
-        <FormField label="Código do conselho" error={errors.codiConc}>
+        <EnhancedFormField label="Código do conselho" error={errors.codiConc} required>
           <input
             className="input"
             {...register("codiConc")}
             placeholder="Ex: 12345"
             maxLength={15}
-            style={getInputStyle('codiConc')}
           />
-          <ErrorMessage error={errors.codiConc} />
-        </FormField>
+        </EnhancedFormField>
 
-        <FormField label="UF do conselho" error={errors.codiConc_UF}>
+        <EnhancedFormField label="UF do conselho" error={errors.codiConc_UF} required>
           <Controller
             name="codiConc_UF"
             control={control}
             render={({ field }) => (
-              <select {...field} className="input" value={field.value || ''} style={getInputStyle('codiConc_UF')}>
+              <select {...field} className="input" value={field.value || ''}>
                 <option value="">Selecione...</option>
-                {estadosBrasil.map(uf => <option key={uf} value={uf}>{uf}</option>)}
+                {estadosBrasil.map(uf => (
+                  <option key={uf} value={uf}>{uf}</option>
+                ))}
               </select>
             )}
           />
-          <ErrorMessage error={errors.codiConc_UF} />
-        </FormField>
+        </EnhancedFormField>
 
-        <FormField label="Disponibilidade" error={errors.disponibilidade}>
+        <EnhancedFormField label="Disponibilidade" error={errors.disponibilidade}>
           <input
             type="number"
             className="input"
             {...register("disponibilidade")}
             placeholder="Ex: 20"
-            style={getInputStyle('disponibilidade')}
+            min="0"
           />
-          <ErrorMessage error={errors.disponibilidade} />
-        </FormField>
+        </EnhancedFormField>
 
-        <FormField label="Status" error={errors.status}>
-          <select 
-            className="input" 
-            {...register("status")}
-            style={getInputStyle('status')}
-          >
-            <option value="A">Ativo</option>
-            <option value="I">Inativo</option>
-          </select>
-          <ErrorMessage error={errors.status} />
-        </FormField>
+        <EnhancedFormField label="Status" error={errors.status} required>
+          <Controller
+            name="status"
+            control={control}
+            render={({ field }) => (
+              <select {...field} className="input">
+                {STATUS_OPTIONS.map(option => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            )}
+          />
+        </EnhancedFormField>
 
       </div>
     </form>

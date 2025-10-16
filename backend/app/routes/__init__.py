@@ -4,6 +4,7 @@ from .profissionais import profissionais_bp
 from .agendamentos import agendamentos_bp
 from .atendimentos import atendimentos_bp
 from .auth import auth_bp
+from .usuarios import usuarios_bp
 from app.utils.jwt_utils import verificar_token
 
 def register_routes(app):
@@ -13,6 +14,7 @@ def register_routes(app):
     app.register_blueprint(profissionais_bp)
     app.register_blueprint(agendamentos_bp)
     app.register_blueprint(atendimentos_bp)
+    app.register_blueprint(usuarios_bp)
 
     @app.before_request
     def proteger_rotas():

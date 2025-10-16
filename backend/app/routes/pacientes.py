@@ -7,8 +7,9 @@ from app.utils.jwt_utils import login_required, role_required
 from werkzeug.utils import secure_filename
 import os
 from datetime import datetime
-import uuid  # Para gerar nomes únicos de arquivo
+import uuid
 
+# CORREÇÃO: Verifique se o url_prefix está correto
 pacientes_bp = Blueprint("pacientes", __name__, url_prefix="/pacientes")
 
 paciente_schema = PacienteSchema()
@@ -42,10 +43,10 @@ def get_paciente(id):
         return jsonify({"erro": f"Erro ao buscar paciente: {str(e)}"}), 500
 
 
-# ---------- CRIAR (com reconhecimento facial, apenas admin) ----------
+# ---------- CRIAR (com reconhecimento facial) ----------
 @pacientes_bp.route("", methods=["POST"])
 @login_required
-@role_required("admin")
+@role_required("admin", "atendente")
 def criar_paciente():
     try:
         print("Dados do formulário:", dict(request.form))
@@ -54,9 +55,13 @@ def criar_paciente():
         dados = dict(request.form)
         print("Dados recebidos:", dados)
 
-        paciente_data = dados
-        print("Dados que serão usados:", paciente_data)
+        # CORREÇÃO: Carregar dados usando o schema para validação
+        paciente_data = paciente_schema.load(dados)
+        print("Dados validados:", paciente_data)
 
+    except ValidationError as err:
+        print("Erro de validação:", err.messages)
+        return jsonify({"erro": "Dados inválidos", "detalhes": err.messages}), 400
     except Exception as e:
         print("Erro geral:", str(e))
         return jsonify({"erro": f"Erro ao processar requisição: {str(e)}"}), 500
@@ -66,10 +71,7 @@ def criar_paciente():
         return jsonify({"erro": "Foto é obrigatória"}), 400
 
     if not foto.filename.lower().endswith((".png", ".jpg", ".jpeg")):
-        return (
-            jsonify({"erro": "Formato de arquivo não suportado. Use PNG, JPG ou JPEG"}),
-            400,
-        )
+        return jsonify({"erro": "Formato de arquivo não suportado. Use PNG, JPG ou JPEG"}), 400
 
     try:
         print("Criando objeto Paciente com dados:", paciente_data)
@@ -104,10 +106,7 @@ def criar_paciente():
             db.session.rollback()
             if os.path.exists(foto_path):
                 os.remove(foto_path)
-            return (
-                jsonify({"erro": f"Erro ao processar reconhecimento facial: {str(e)}"}),
-                400,
-            )
+            return jsonify({"erro": f"Erro ao processar reconhecimento facial: {str(e)}"}), 400
 
     except Exception as e:
         print("Erro ao criar paciente:", str(e))
@@ -115,21 +114,17 @@ def criar_paciente():
         return jsonify({"erro": f"Erro ao criar paciente: {str(e)}"}), 500
 
 
-
 # ---------- ENCONTRAR PACIENTE POR ROSTO ----------
 @pacientes_bp.route("/encontrar", methods=["POST"])
 @login_required
-@role_required("admin", "atendente")  
+@role_required("admin", "atendente")
 def encontrar_paciente():
     foto = request.files.get("foto")
     if not foto:
         return jsonify({"erro": "Foto é obrigatória"}), 400
 
     if not foto.filename.lower().endswith((".png", ".jpg", ".jpeg")):
-        return (
-            jsonify({"erro": "Formato de arquivo não suportado. Use PNG, JPG ou JPEG"}),
-            400,
-        )
+        return jsonify({"erro": "Formato de arquivo não suportado. Use PNG, JPG ou JPEG"}), 400
 
     unique_id = uuid.uuid4().hex
     filename = secure_filename(f"buscar_{unique_id}_{foto.filename}")
@@ -144,43 +139,24 @@ def encontrar_paciente():
             os.remove(foto_path)
 
         if not paciente_id:
-            return (
-                jsonify(
-                    {
-                        "status": "not_found",
-                        "mensagem": "Nenhum paciente correspondente encontrado",
-                    }
-                ),
-                404,
-            )
+            return jsonify({
+                "status": "not_found",
+                "mensagem": "Nenhum paciente correspondente encontrado"
+            }), 400
 
         paciente = Paciente.query.get(paciente_id)
         if not paciente:
-            return (
-                jsonify(
-                    {
-                        "status": "error",
-                        "mensagem": "Paciente não encontrado no banco de dados",
-                    }
-                ),
-                404,
-            )
+            return jsonify({
+                "status": "error",
+                "mensagem": "Paciente não encontrado no banco de dados"
+            }), 400
 
-        return (
-            jsonify(
-                {
-                    "status": "success",
-                    "paciente": paciente_schema.dump(paciente),
-                    "distancia": float(distancia) if distancia else 0.0,
-                    "confianca": (
-                        f"{(1 - (float(distancia) if distancia else 0.0)) * 100:.2f}%"
-                        if distancia
-                        else "N/A"
-                    ),
-                }
-            ),
-            200,
-        )
+        return jsonify({
+            "status": "success",
+            "paciente": paciente_schema.dump(paciente),
+            "distancia": float(distancia) if distancia else 0.0,
+            "confianca": f"{(1 - (float(distancia) if distancia else 0.0)) * 100:.2f}%" if distancia else "N/A"
+        }), 200
 
     except Exception as e:
         if os.path.exists(foto_path):
@@ -191,7 +167,7 @@ def encontrar_paciente():
 # ---------- ATUALIZAR ----------
 @pacientes_bp.route("/<int:id>", methods=["PUT"])
 @login_required
-@role_required("admin")
+@role_required("admin", "atendente")
 def atualizar_paciente(id):
     try:
         paciente = Paciente.query.get(id)
@@ -210,30 +186,17 @@ def atualizar_paciente(id):
         foto = request.files.get("foto")
         if foto:
             if not foto.filename.lower().endswith((".png", ".jpg", ".jpeg")):
-                return (
-                    jsonify(
-                        {
-                            "erro": "Formato de arquivo não suportado. Use PNG, JPG ou JPEG"
-                        }
-                    ),
-                    400,
-                )
+                return jsonify({"erro": "Formato de arquivo não suportado. Use PNG, JPG ou JPEG"}), 400
 
-            # Gerar nome único para a nova foto
             unique_id = uuid.uuid4().hex
-            filename = secure_filename(
-                f"{paciente.idPaciente}_{unique_id}_{foto.filename}"
-            )
+            filename = secure_filename(f"{paciente.idPaciente}_{unique_id}_{foto.filename}")
             foto_path = os.path.join(UPLOAD_FOLDER, filename)
 
-            # Salvar nova foto
             foto.save(foto_path)
 
             try:
-                # Atualizar reconhecimento facial
                 register_face(foto_path, paciente.idPaciente)
             except Exception as e:
-                # Remover arquivo se houver erro no reconhecimento
                 if os.path.exists(foto_path):
                     os.remove(foto_path)
                 return jsonify({"erro": f"Erro ao processar nova foto: {str(e)}"}), 400
@@ -244,8 +207,8 @@ def atualizar_paciente(id):
         return jsonify(paciente_schema.dump(paciente)), 200
 
     except ValidationError as err:
-        print("🚨 ERROS DE VALIDAÇÃO NA ATUALIZAÇÃO:", err.messages)
-        return jsonify(err.messages), 400
+        print("Erros de validação:", err.messages)
+        return jsonify({"erro": "Dados inválidos", "detalhes": err.messages}), 400
     except Exception as e:
         db.session.rollback()
         print("Erro ao atualizar paciente:", str(e))
@@ -262,16 +225,13 @@ def deletar_paciente(id):
         if not paciente:
             return jsonify({"erro": "Paciente não encontrado"}), 404
 
-        # TODO: Adicionar lógica para remover arquivos de face associados
-        # Isso depende de como você está gerenciando os arquivos de reconhecimento facial
-
         db.session.delete(paciente)
         db.session.commit()
 
-        return (
-            jsonify({"mensagem": f"Paciente {id} deletado com sucesso", "id": id}),
-            200,
-        )
+        return jsonify({
+            "mensagem": f"Paciente {id} deletado com sucesso",
+            "id": id
+        }), 200
 
     except Exception as e:
         db.session.rollback()

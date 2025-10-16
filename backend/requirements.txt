@@ -4,21 +4,26 @@ Flask-Login==0.6.3         # Autenticação e controle de sessão
 Flask-Cors==4.0.1          # Habilitar CORS
 
 # --- Banco de Dados ---
-Flask-SQLAlchemy==3.0.3
+Flask-SQLAlchemy==3.0.3    # Integração Flask + SQLAlchemy
 SQLAlchemy==2.0.31         # ORM para banco de dados relacional
-PyMySQL==1.1.1             # Driver MySQL (compatível com SQLAlchemy)
+PyMySQL==1.1.1             # Driver MySQL (puro Python)
 
 # --- Arquivos de Configuração ---
 python-dotenv==1.0.1       # Ler variáveis de ambiente do .env
 
-# --- Reconhecimento Facial ---
+# --- Reconhecimento Facial / IA ---
 insightface==0.7.3         # Biblioteca ArcFace para embeddings
 onnxruntime==1.17.3        # Execução de modelos ONNX
 opencv-python==4.10.0.84   # Processamento de imagem e captura de vídeo
 numpy==1.26.4              # Operações numéricas
 faiss-cpu==1.8.0           # Busca e comparação de embeddings
 
+# --- Ciência de Dados / Processamento ---
+scipy==1.15.3              # Computação científica
+scikit-learn==1.7.1        # Machine Learning
+scikit-image==0.25.2       # Processamento de imagens
+
 # --- Utilitários ---
 requests==2.32.3           # Requisições HTTP
 Pillow==10.3.0             # Manipulação de imagens
-marshmallow==3.21.1        # Serialização e validação
+marshmallow==4.0.0         # Serialização e validação 

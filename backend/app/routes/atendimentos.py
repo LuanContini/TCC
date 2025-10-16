@@ -68,7 +68,7 @@ def get_atendimento_por_codigo(codiAten):
 # ---------- CRIAR ----------
 @atendimentos_bp.route('', methods=['POST'])
 @login_required
-@role_required("admin")
+@role_required("admin", "atendente")
 def criar_atendimento():
     try:
         dados = request.get_json()
@@ -117,7 +117,7 @@ def criar_atendimento():
 # ---------- ATUALIZAR ----------
 @atendimentos_bp.route('/<int:id>', methods=['PUT'])
 @login_required
-@role_required("admin")
+@role_required("admin", "atendente")
 def atualizar_atendimento(id):
     try:
         atendimento = Atendimento.query.get_or_404(id)
